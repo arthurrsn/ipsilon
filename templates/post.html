@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post e Comentários</title>
+</head>
+<body>
+    <h1>{{ message.username }}: {{ message.text }}</h1>
+
+    <h3>Comentários:</h3>
+    <ul>
+        {% for comment in comments %}
+            <li>{{ comment.username }}: {{ comment.text }}</li>
+        {% endfor %}
+    </ul>
+
+    <form action="{{ url_for('send_comment', message_id=message_id) }}" method="POST">
+        <textarea name="comment" placeholder="Deixe seu comentário" required></textarea>
+        <button type="submit">Enviar Comentário</button>
+    </form>
+
+    <a href="{{ url_for('forum') }}">Voltar ao fórum</a>
+</body>
+</html>
