@@ -1,0 +1,114 @@
+from flask import Flask, render_template, request, redirect, url_for, session
+import firebase_admin
+from firebase_admin import credentials, firestore
+
+app = Flask(__name__)
+app.secret_key = 'calwdawdasnmdu23g238sdyhawdmbausd77d8u089gjkfgkjvbfvb'  # Para gerenciar as sessões
+
+# Inicializando o Firebase
+cred = credentials.Certificate('firebase_config.json')  # Arquivo JSON de chave do Firebase
+firebase_admin.initialize_app(cred)
+db = firestore.client()
+
+# Rota para a página de login
+@app.route('/')
+def login():
+    return render_template('login.html')
+
+# Rota para autenticar o login
+@app.route('/login', methods=['POST'])
+def handle_login():
+    username = request.form['username']
+    password = request.form['password']
+
+    # Verifica se o usuário existe no Firestore
+    users_ref = db.collection('users')
+    query = users_ref.where('username', '==', username).get()
+
+    if query:
+        user = query[0].to_dict()
+        if user['password'] == password:
+            session['username'] = username
+            return redirect(url_for('forum'))
+        else:
+            return render_template('login.html', error="Senha incorreta")
+    else:
+        return render_template('login.html', error="Usuário não encontrado")
+
+# Rota para o fórum principal
+@app.route('/forum')
+def forum():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    # Carrega todas as mensagens
+    messages_ref = db.collection('messages').order_by('timestamp').get()
+    messages = []
+    for doc in messages_ref:
+        message_data = doc.to_dict()
+        message_id = doc.id
+
+        messages.append({
+            'text': message_data.get('text', 'Mensagem sem texto'),
+            'username': '@' + message_data.get('username', 'Usuário desconhecido'),
+            'id': message_id
+        })
+    
+    return render_template('forum.html', username=session['username'], messages=messages)
+
+# Rota para exibir a página da mensagem com seus comentários
+@app.route('/post/<message_id>')
+def view_post(message_id):
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    # Carrega a mensagem principal
+    message_ref = db.collection('messages').document(message_id).get()
+    message_data = message_ref.to_dict()
+
+    if not message_data:
+        return "Mensagem não encontrada", 404
+
+    # Carrega os comentários da mensagem
+    comments_ref = db.collection('messages').document(message_id).collection('comments').order_by('timestamp').get()
+    comments = [{'text': comment.to_dict().get('text'), 'username': '@' + comment.to_dict().get('username')} for comment in comments_ref]
+    
+    return render_template('post.html', message=message_data, comments=comments, message_id=message_id)
+
+# Rota para enviar uma mensagem
+@app.route('/send_message', methods=['POST'])
+def send_message():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    message_text = request.form['message']
+
+    # Armazena a mensagem no Firestore
+    db.collection('messages').add({
+        'text': message_text,
+        'username': session['username'],
+        'timestamp': firestore.SERVER_TIMESTAMP
+    })
+
+    return redirect(url_for('forum'))
+
+# Rota para enviar um comentário
+@app.route('/send_comment/<message_id>', methods=['POST'])
+def send_comment(message_id):
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    comment_text = request.form['comment']
+
+    # Armazena o comentário como uma subcoleção da mensagem
+    db.collection('messages').document(message_id).collection('comments').add({
+        'text': comment_text,
+        'username': session['username'],
+        'timestamp': firestore.SERVER_TIMESTAMP
+    })
+
+    return redirect(url_for('view_post', message_id=message_id))
+
+# Iniciando o servidor Flask
+if __name__ == '__main__':
+    app.run(debug=True)
