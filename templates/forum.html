@@ -1,26 +1,53 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fórum</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <h1>Bem-vindo(a), {{ username }}!</h1>
+    <h1>Ípsilon</h1>  <!-- Mensagem de boas-vindas -->
 
-    <h2>Mensagens:</h2>
-    <ul>
+    <button id="logout-button" onclick="window.location.href='{{ url_for('logout') }}'">Sair</button>
+
+    <button id="new-message-button">+ Nova Mensagem</button>
+
+    <!-- Exibição das mensagens -->
+    <div id="messages">
         {% for message in messages %}
-            <li>
-                <strong>{{ message.username }}:</strong> {{ message.text }}
-                <a href="{{ url_for('view_post', message_id=message.id) }}">Comentários</a>
-            </li>
+            <div class="message" style="margin-bottom: 10px;">  <!-- Distância entre mensagens -->
+                <p style="margin: 0;"><strong>{{ message.username }}:</strong> {{ message.topic }}</p> <!-- Distância entre usuário e tópico -->
+                <p style="margin: 0;">{{ message.text }}</p> <!-- Distância entre tópico e mensagem -->
+                <a href="{{ url_for('view_post', message_id=message.id) }}" class="comment-button" style="margin-top: 5px;">Comentários</a> <!-- Distância entre mensagem e botão de comentário -->
+            </div>
         {% endfor %}
-    </ul>
+    </div>
 
-    <form action="{{ url_for('send_message') }}" method="POST">
-        <textarea name="message" placeholder="Escreva sua mensagem" required></textarea>
-        <button type="submit">Enviar Mensagem</button>
-    </form>
+    <!-- Popup para nova mensagem -->
+    <div id="new-message-popup" style="display: none;">
+        <h2>Nova Mensagem</h2>
+        <form action="{{ url_for('send_message') }}" method="POST">
+            <label for="topic">Tópico:</label>
+            <input type="text" name="topic" required>
+            <label for="message">Mensagem:</label>
+            <textarea name="message" required></textarea>
+            <button type="submit">Enviar</button>
+        </form>
+        <button id="close-popup">Fechar</button>
+    </div>
+
+    <script>
+        // Abre o popup para nova mensagem
+        $('#new-message-button').on('click', function() {
+            $('#new-message-popup').show();
+        });
+
+        // Fecha o popup
+        $('#close-popup').on('click', function() {
+            $('#new-message-popup').hide();
+        });
+    </script>
 </body>
 </html>
