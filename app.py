@@ -50,6 +50,7 @@ def forum():
 
         messages.append({
             'text': message_data.get('text', 'Mensagem sem texto'),
+            'topic': message_data.get('topic', 'Tópico sem título'),  # Adicionado para o tópico
             'username': '@' + message_data.get('username', 'Usuário desconhecido'),
             'id': message_id
         })
@@ -82,10 +83,12 @@ def send_message():
         return redirect(url_for('login'))
 
     message_text = request.form['message']
+    message_topic = request.form['topic']  # Obtemos o tópico
 
     # Armazena a mensagem no Firestore
     db.collection('messages').add({
         'text': message_text,
+        'topic': message_topic,  # Adicionamos o tópico
         'username': session['username'],
         'timestamp': firestore.SERVER_TIMESTAMP
     })
@@ -108,6 +111,31 @@ def send_comment(message_id):
     })
 
     return redirect(url_for('view_post', message_id=message_id))
+
+@app.route('/request_access', methods=['GET', 'POST'])
+def request_access():
+    if request.method == 'POST':
+        # Obter os dados do formulário
+        name = request.form['name']
+        email = request.form['email']
+
+        # Salvar os dados no Firestore na coleção "solicitações"
+        db.collection('solicitações').add({
+            'name': name,
+            'email': email
+        })
+
+        # Redirecionar para a página de login
+        return redirect(url_for('login'))  # Altere para o endpoint que você deseja
+
+    # Para método GET, retorna o formulário de solicitação de acesso
+    return render_template('request_access.html')
+
+# Rota para logout
+@app.route('/logout')
+def logout():
+    session.pop('username', None)  # Remove o usuário da sessão
+    return redirect(url_for('login'))
 
 # Iniciando o servidor Flask
 if __name__ == '__main__':
