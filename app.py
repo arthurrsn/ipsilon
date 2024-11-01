@@ -101,7 +101,7 @@ def send_comment(message_id):
     if 'username' not in session:
         return redirect(url_for('login'))
 
-    comment_text = request.form['comment']
+    comment_text = request.form.get('comment')
 
     # Armazena o comentário como uma subcoleção da mensagem
     db.collection('messages').document(message_id).collection('comments').add({
