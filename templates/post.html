@@ -1,25 +1,49 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Post e Comentários</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <h1>{{ message.username }}: {{ message.text }}</h1>
+    <h1>{{ message.username }}: {{ message.topic }}</h1>
+    <p>{{ message.text }}</p>  <!-- Exibe o conteúdo da mensagem -->
 
     <h3>Comentários:</h3>
     <ul>
         {% for comment in comments %}
             <li>{{ comment.username }}: {{ comment.text }}</li>
+        {% else %}
+            <li>Nenhum comentário ainda.</li> <!-- Mensagem caso não haja comentários -->
         {% endfor %}
     </ul>
 
-    <form action="{{ url_for('send_comment', message_id=message_id) }}" method="POST">
-        <textarea name="comment" placeholder="Deixe seu comentário" required></textarea>
-        <button type="submit">Enviar Comentário</button>
-    </form>
+    <!-- Botão para abrir o pop-up de comentário -->
+    <button id="new-comment-button">Deixar Comentário</button>
+
+    <!-- Popup para novo comentário -->
+    <div id="new-comment-popup" style="display: none;">
+        <h2>Deixe seu Comentário</h2>
+        <form action="{{ url_for('send_comment', message_id=message.id) }}" method="POST">
+            <textarea name="comment" placeholder="Escreva seu comentário" required></textarea>
+            <button type="submit">Enviar Comentário</button>
+        </form>
+        <button id="close-popup">Fechar</button>
+    </div>
 
     <a href="{{ url_for('forum') }}">Voltar ao fórum</a>
+
+    <script>
+        // Abre o pop-up para novo comentário
+        $('#new-comment-button').on('click', function() {
+            $('#new-comment-popup').show();
+        });
+
+        // Fecha o pop-up
+        $('#close-popup').on('click', function() {
+            $('#new-comment-popup').hide();
+        });
+    </script>
 </body>
 </html>
