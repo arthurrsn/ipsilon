@@ -25,10 +25,10 @@
     <!-- Popup para novo comentário -->
     <div id="new-comment-popup" style="display: none;">
         <h2>Deixe seu Comentário</h2>
-        <form action="{{ url_for('send_comment', message_id=message.id) }}" method="POST">
-            <textarea name="comment" placeholder="Escreva seu comentário" required></textarea>
+        <form action="{{ url_for('send_comment', message_id=message_id) }}" method="POST">
+            <textarea name="comment" placeholder="Deixe seu comentário" required></textarea>
             <button type="submit">Enviar Comentário</button>
-        </form>
+        </form>        
         <button id="close-popup">Fechar</button>
     </div>
 
