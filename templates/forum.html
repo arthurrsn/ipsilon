@@ -17,10 +17,13 @@
     <!-- Exibição das mensagens -->
     <div id="messages">
         {% for message in messages %}
-            <div class="message" style="margin-bottom: 10px;">  <!-- Distância entre mensagens -->
-                <p style="margin: 0;"><strong>{{ message.username }}:</strong> {{ message.topic }}</p> <!-- Distância entre usuário e tópico -->
-                <p style="margin: 0;">{{ message.text }}</p> <!-- Distância entre tópico e mensagem -->
-                <a href="{{ url_for('view_post', message_id=message.id) }}" class="comment-button" style="margin-top: 5px;">Comentários</a> <!-- Distância entre mensagem e botão de comentário -->
+            <div class="message" style="margin-bottom: 10px;">
+                <p style="margin: 0;"><strong>{{ message.username }}:</strong> {{ message.topic }}</p>
+                <p style="margin: 0;">{{ message.text }}</p>
+                {% if message.image_url %}
+                    <img src="{{ message.image_url }}" alt="Imagem da mensagem" style="max-width: 100%; height: auto;">
+                {% endif %}
+                <a href="{{ url_for('view_post', message_id=message.id) }}" class="comment-button" style="margin-top: 5px;">Ver Comentários</a>
             </div>
         {% endfor %}
     </div>
@@ -28,11 +31,13 @@
     <!-- Popup para nova mensagem -->
     <div id="new-message-popup" style="display: none;">
         <h2>Nova Mensagem</h2>
-        <form action="{{ url_for('send_message') }}" method="POST">
+        <form action="{{ url_for('send_message') }}" method="POST" enctype="multipart/form-data">
             <label for="topic">Tópico:</label>
             <input type="text" name="topic" required>
             <label for="message">Mensagem:</label>
             <textarea name="message" required></textarea>
+            <label for="image">Selecionar imagem:</label>
+            <input type="file" name="image" accept="image/*"> <!-- Novo campo de upload -->
             <button type="submit">Enviar</button>
         </form>
         <button id="close-popup">Fechar</button>
