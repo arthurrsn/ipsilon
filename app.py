@@ -6,7 +6,7 @@ app = Flask(__name__)
 app.secret_key = 'calwdawdasnmdu23g238sdyhawdmbausd77d8u089gjkfgkjvbfvb'  # Para gerenciar as sessões
 
 # Inicializando o Firebase
-cred = credentials.Certificate('forum-a3ed4-firebase-adminsdk-44kdo-e15ba46a3e.json')  # Arquivo JSON de chave do Firebase
+cred = credentials.Certificate('firebase_config.json')  # Arquivo JSON de chave do Firebase
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
