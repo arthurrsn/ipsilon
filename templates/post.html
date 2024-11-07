@@ -10,6 +10,12 @@
     <h1>{{ message.username }}: {{ message.topic }}</h1>
     <p>{{ message.text }}</p>  <!-- Exibe o conteúdo da mensagem -->
 
+    {% if message['image_url'] %}
+        <div>
+            <img src="{{ message['image_url'] }}" alt="Imagem relacionada à mensagem" style="max-width: 100%; height: auto;">
+        </div>
+    {% endif %}
+    
     <h3>Comentários:</h3>
     <ul>
         {% for comment in comments %}
