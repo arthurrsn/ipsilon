@@ -1,15 +1,15 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import firebase_admin
 from firebase_admin import credentials, firestore, storage
+import os
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = 'calwdawdasnmdu23g238sdyhawdmbausd77d8u089gjkfgkjvbfvb'  # Para gerenciar as sessões
 
 # Inicializando o Firebase
 cred = credentials.Certificate('firebase_config.json')  # Arquivo JSON de chave do Firebase
-firebase_admin.initialize_app(cred, {
-    'storageBucket': 'seu-projeto.appspot.com'  # Substitua pelo nome do seu bucket
-})
+firebase_admin.initialize_app(cred, {'storageBucket': 'forum-a3ed4.appspot.com'})
 db = firestore.client()
 bucket = storage.bucket()
 
@@ -32,9 +32,9 @@ def handle_login():
         user = query[0].to_dict()
         if user['password'] == password:
             session['username'] = username
-            # Verifica se o usuário já aceitou os termos
+            # Verifica se o usuário aceitou os termos
             if user.get('accepted_terms', 'no') == 'no':
-                return redirect(url_for('accept_terms'))
+                return redirect(url_for('accept_terms'))  # Redireciona para aceitar os termos
             return redirect(url_for('forum'))
         else:
             return render_template('login.html', error="Senha incorreta")
@@ -66,7 +66,7 @@ def forum():
     if 'username' not in session:
         return redirect(url_for('login'))
 
-    # Carrega todas as mensagens (em ordem decrescente, mais recente primeiro)
+    # Carrega todas as mensagens
     messages_ref = db.collection('messages').order_by('timestamp', direction=firestore.Query.DESCENDING).get()
     messages = []
     for doc in messages_ref:
@@ -78,9 +78,9 @@ def forum():
             'topic': message_data.get('topic', 'Tópico sem título'),
             'username': '@' + message_data.get('username', 'Usuário desconhecido'),
             'id': message_id,
-            'image_url': message_data.get('image_url')  # Exibe a imagem, se existir
+            'image_url': message_data.get('image_url')  # Incluindo a URL da imagem, se existir
         })
-
+    
     return render_template('forum.html', username=session['username'], messages=messages)
 
 # Rota para exibir a página da mensagem com seus comentários
@@ -99,24 +99,36 @@ def view_post(message_id):
     # Carrega os comentários da mensagem
     comments_ref = db.collection('messages').document(message_id).collection('comments').order_by('timestamp').get()
     comments = [{'text': comment.to_dict().get('text'), 'username': '@' + comment.to_dict().get('username')} for comment in comments_ref]
-
+    
     return render_template('post.html', message=message_data, comments=comments, message_id=message_id)
 
-# Rota para enviar uma mensagem
+# Rota para enviar uma mensagem com upload de imagem opcional
 @app.route('/send_message', methods=['POST'])
 def send_message():
     if 'username' not in session:
         return redirect(url_for('login'))
 
     message_text = request.form['message']
-    message_topic = request.form['topic']  # Obtemos o tópico
+    message_topic = request.form['topic']
+
+    # Upload de imagem, se fornecida
+    image_url = None
+    if 'image' in request.files:
+        image = request.files['image']
+        if image.filename != '':
+            filename = secure_filename(image.filename)
+            blob = bucket.blob(filename)
+            blob.upload_from_file(image)
+            blob.make_public()  # Torna o URL acessível publicamente
+            image_url = blob.public_url
 
     # Armazena a mensagem no Firestore
     db.collection('messages').add({
         'text': message_text,
-        'topic': message_topic,  # Adicionamos o tópico
+        'topic': message_topic,
         'username': session['username'],
-        'timestamp': firestore.SERVER_TIMESTAMP
+        'timestamp': firestore.SERVER_TIMESTAMP,
+        'image_url': image_url  # Armazenando a URL da imagem, se existir
     })
 
     return redirect(url_for('forum'))
